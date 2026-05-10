@@ -60,6 +60,7 @@ namespace Rouge
 
         private void Update()
         {
+            if (GameManager.IsPaused) return;
             if (Time.time >= nextSpawnTime)
             {
                 TrySpawn();

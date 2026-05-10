@@ -104,6 +104,7 @@ namespace Rouge
         private void Update()
         {
             if (playerTransform == null) return;
+            if (GameManager.IsPaused) return;
 
             // Orbital always updates when active
             if (activeTypes.Contains(BulletType.Orbital))
