@@ -1,0 +1,63 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b90a5c942c9fcb04fbb0f2dd97dd9349, type: 3}
+  m_Name: GameConfig
+  m_EditorClassIdentifier: 
+  straight:
+    typeName: Straight
+    cooldown: 0.3
+    damage: 10
+    speed: 10
+    count: 1
+    color: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  orbital:
+    typeName: Orbital
+    cooldown: 0
+    damage: 10
+    speed: 360
+    count: 3
+    color: {r: 1, g: 0.5, b: 0, a: 1}
+  ricochet:
+    typeName: Ricochet
+    cooldown: 0.5
+    damage: 8
+    speed: 8
+    count: 1
+    color: {r: 0, g: 1, b: 0, a: 1}
+  shotgun:
+    typeName: Shotgun
+    cooldown: 0.8
+    damage: 6
+    speed: 10
+    count: 5
+    color: {r: 1, g: 0, b: 1, a: 1}
+  chain:
+    typeName: Chain
+    cooldown: 0.6
+    damage: 12
+    speed: 20
+    count: 1
+    color: {r: 0, g: 1, b: 1, a: 1}
+  playerMaxHP: 100
+  enemyContactDamage: 10
+  maxEnemies: 200
+  spawnInterval: 0.3
+  enemyHP: 10
+  enemySpeed: 2
+  enemyColor: {r: 1, g: 0, b: 0, a: 1}
+  orbitalRadius: 1.5
+  ricochetMaxBounces: 5
+  shotgunSpreadAngle: 60
+  chainMaxHops: 3
+  chainRange: 5
+  cameraOrthoSize: 8
+  backgroundColor: {r: 0.1, g: 0.1, b: 0.15, a: 1}
