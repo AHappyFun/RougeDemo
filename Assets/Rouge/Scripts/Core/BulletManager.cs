@@ -74,7 +74,7 @@ namespace Rouge
                 cooldowns = new float[] { config.straight.cooldown, config.orbital.cooldown,
                     config.ricochet.cooldown, config.shotgun.cooldown, config.chain.cooldown };
                 orbitalCount = config.orbital.count;
-                orbitalRadius = config.orbitalRadius;
+                orbitalRadius = config.orbital.radius;
                 orbitalSpeed = config.orbital.speed;
                 ricochetMaxBounces = config.ricochetMaxBounces;
                 shotgunCount = config.shotgun.count;
@@ -152,6 +152,10 @@ namespace Rouge
             ApplyConfig();
             for (int i = 0; i < cooldowns.Length; i++)
                 cooldowns[i] *= cooldownMult;
+            // Reset cooldown timers so shorter cooldowns don't trigger instant re-fire
+            float now = Time.time;
+            for (int i = 0; i < lastFireTimes.Length; i++)
+                lastFireTimes[i] = now;
             if (hadOrbital) CreateOrbital();
         }
 
@@ -244,7 +248,7 @@ namespace Rouge
             var target = FindNearestEnemy();
             Vector3 dir = target != null
                 ? (target.transform.position - playerTransform.position).normalized
-                : Random.insideUnitCircle.normalized;
+                : new Vector3(Random.Range(-1f, 1f), 0f, Random.Range(-1f, 1f)).normalized;
             var cfg = GetConfig(BulletType.Ricochet);
             var go = MeshGenerator.CreateSwordBullet("RicochetSword",
                 cfg?.color ?? new Color(0.3f, 1f, 0.4f), 0.6f);
@@ -262,7 +266,7 @@ namespace Rouge
             var target = FindNearestEnemy();
             Vector3 baseDir = target != null
                 ? (target.transform.position - playerTransform.position).normalized
-                : Vector3.up;
+                : Vector3.forward;
             var cfg = GetConfig(BulletType.Shotgun);
             int count = (cfg?.count ?? shotgunCount) + countBonus;
             float spread = Mathf.Max(10f, shotgunSpread - shotgunSpreadReduction);
@@ -272,7 +276,7 @@ namespace Rouge
             for (int i = 0; i < count; i++)
             {
                 float angle = startAngle + step * i;
-                Vector3 dir = Quaternion.Euler(0, 0, angle) * baseDir;
+                Vector3 dir = Quaternion.Euler(0, angle, 0) * baseDir;
                 var go = MeshGenerator.CreateSwordBullet("ShotgunSword",
                     cfg?.color ?? new Color(1f, 0.3f, 0.9f), 0.5f);
                 go.transform.position = playerTransform.position;
@@ -330,12 +334,12 @@ namespace Rouge
                 if (orbitalBullets[i] == null) continue;
                 float angle = orbitalAngleOffset + (360f / orbitalBullets.Length) * i;
                 float rad = angle * Mathf.Deg2Rad;
-                Vector3 pos = playerTransform.position + new Vector3(Mathf.Cos(rad), Mathf.Sin(rad), 0) * orbitalRadius;
+                Vector3 pos = playerTransform.position + new Vector3(Mathf.Cos(rad), 0, Mathf.Sin(rad)) * orbitalRadius;
                 orbitalBullets[i].transform.position = pos;
-                // Face tangential to orbit
-                Vector3 tangent = new Vector3(-Mathf.Sin(rad), Mathf.Cos(rad), 0);
-                float swordAngle = Mathf.Atan2(tangent.y, tangent.x) * Mathf.Rad2Deg - 90f;
-                orbitalBullets[i].transform.rotation = Quaternion.Euler(0, 0, swordAngle);
+                // Face tangential to orbit (XZ plane)
+                Vector3 tangent = new Vector3(-Mathf.Sin(rad), 0, Mathf.Cos(rad));
+                float swordAngle = Mathf.Atan2(tangent.x, tangent.z) * Mathf.Rad2Deg;
+                orbitalBullets[i].transform.rotation = Quaternion.Euler(0, swordAngle, 0);
             }
         }
 

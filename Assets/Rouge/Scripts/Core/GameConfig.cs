@@ -23,6 +23,7 @@ namespace Rouge
             damage = 10,
             speed = 360f,
             count = 3,
+            radius = 4f,
             color = new Color(1f, 0.5f, 0f)
         };
 
@@ -67,9 +68,6 @@ namespace Rouge
         public float enemySpeed = 2.5f;
         public Color enemyColor = Color.red;
 
-        [Header("Orbital Config")]
-        public float orbitalRadius = 1.5f;
-
         [Header("Ricochet Config")]
         public int ricochetMaxBounces = 5;
 
@@ -95,6 +93,8 @@ namespace Rouge
         public float speed;
         [Tooltip("Bullets per shot (shotgun pellets, orbital count, etc.)")]
         public int count;
+        [Tooltip("Orbit radius (orbital only)")]
+        public float radius = 1.5f;
         public Color color;
     }
 }

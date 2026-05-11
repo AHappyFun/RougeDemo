@@ -12,6 +12,7 @@ namespace Rouge
         public void Init(Vector3 dir, int maxBouncesOverride = -1)
         {
             direction = dir.normalized;
+            direction.y = 0f;
             bounceCount = 0;
             if (maxBouncesOverride > 0) maxBounces = maxBouncesOverride;
             cam = Camera.main;
@@ -20,12 +21,14 @@ namespace Rouge
 
         private void UpdateFacing()
         {
-            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg - 90f;
-            transform.rotation = Quaternion.Euler(0, 0, angle);
+            direction.y = 0f;
+            float angle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
+            transform.rotation = Quaternion.Euler(0, angle, 0);
         }
 
         protected override void Update()
         {
+            if (GameManager.IsPaused) return;
             base.Update();
             transform.position += direction * speed * Time.deltaTime;
 
@@ -34,8 +37,8 @@ namespace Rouge
 
             if (viewport.x < 0f) { direction.x = Mathf.Abs(direction.x); bounced = true; }
             else if (viewport.x > 1f) { direction.x = -Mathf.Abs(direction.x); bounced = true; }
-            if (viewport.y < 0f) { direction.y = Mathf.Abs(direction.y); bounced = true; }
-            else if (viewport.y > 1f) { direction.y = -Mathf.Abs(direction.y); bounced = true; }
+            if (viewport.y < 0f) { direction.z = Mathf.Abs(direction.z); bounced = true; }
+            else if (viewport.y > 1f) { direction.z = -Mathf.Abs(direction.z); bounced = true; }
 
             if (bounced)
             {
@@ -47,7 +50,8 @@ namespace Rouge
 
         protected override void OnHitEnemy(Collider enemy)
         {
-            direction = Random.insideUnitCircle.normalized;
+            Vector3 rand = Random.insideUnitSphere;
+            direction = new Vector3(rand.x, 0f, rand.z).normalized;
             UpdateFacing();
             bounceCount++;
             if (bounceCount >= maxBounces) Destroy(gameObject);

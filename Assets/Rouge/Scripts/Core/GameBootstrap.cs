@@ -14,13 +14,21 @@ namespace Rouge
 
         private void Awake()
         {
+            // Load configs from Resources if Inspector refs are missing
+            if (config == null) config = Resources.Load<GameConfig>("GameConfig");
+            if (waveConfig == null) waveConfig = Resources.Load<WaveConfig>("WaveConfig");
+
             if (config != null)
             {
                 orthoSize = config.cameraOrthoSize;
                 backgroundColor = config.backgroundColor;
             }
             SetupCamera();
+            // Build scene if not loaded from .unity file
+            if (GameObject.Find("Floor") == null) SceneBuilder.Build();
             var player = CreatePlayer();
+            player.gameObject.AddComponent<PlayerMovement>();
+            SetupCamera3D(player);
             var bulletMgr = CreateBulletManager(player);
             var enemySpawner = CreateEnemySpawner();
             var gameMgr = CreateGameManager(bulletMgr, enemySpawner);
@@ -44,10 +52,23 @@ namespace Rouge
             cam.transform.position = new Vector3(0, 0, -10);
         }
 
+        private void SetupCamera3D(Transform player)
+        {
+            var cam = Camera.main;
+            if (cam == null) return;
+            cam.orthographic = false;
+            cam.fieldOfView = 45f;
+            cam.transform.position = new Vector3(player.position.x, 18f, player.position.z);
+            cam.transform.rotation = Quaternion.Euler(70, 0, 0);
+            var cf = cam.gameObject.AddComponent<CameraFollow>();
+            cf.target = player;
+            cf.height = 18f;
+        }
+
         private Transform CreatePlayer()
         {
             var go = MeshGenerator.CreatePlayer(Color.white, 1.2f);
-            go.transform.position = Vector3.zero;
+            go.transform.position = new Vector3(0, 0.5f, 0);
 
             var ph = go.AddComponent<PlayerHealth>();
             ph.maxHP = config != null ? config.playerMaxHP : 100;

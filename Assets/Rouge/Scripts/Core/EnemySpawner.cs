@@ -76,8 +76,14 @@ namespace Rouge
 
         private void BuildEnemy(Vector3 position)
         {
+            position.y = 0.5f;
             var go = MeshGenerator.CreateEnemy(enemyColor);
             go.transform.position = position;
+
+            // Remove Rigidbody (NavMeshAgent handles movement), keep Collider for triggers
+            var rb = go.GetComponent<Rigidbody>();
+            if (rb != null) Object.Destroy(rb);
+            go.AddComponent<UnityEngine.AI.NavMeshAgent>();
 
             var be = go.AddComponent<BaseEnemy>();
             be.moveSpeed = enemySpeed;
