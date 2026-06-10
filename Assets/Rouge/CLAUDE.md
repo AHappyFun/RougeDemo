@@ -138,6 +138,7 @@ Assets/Rouge/
 - **Orbital 数组泄漏**：`ApplyUpgrades()` 中先 `DestroyOrbital()` 再 `ApplyConfig()` 最后 `CreateOrbital()`，否则 orbitalBullets 数组会孤儿化
 - **Scene 文件**：改场景会导致 .unity 元数据变更，仅当用户明确要求时修改
 - **Prefab Scale 叠加**：prefab 自身 scale 和 `MeshGenerator.CreateXxx` 的 scale 参数不能重复设置——prefab 应为单位缩放 (1,1,1)
+- **🔴 禁止硬编码地图/场景相关数值**：`bounds`、`MaxDistance`、子弹销毁距离等与地图尺寸耦合的值，必须从场景数据、GameConfig 或运行时计算获取。写死常量会导致地图放大/修改时功能静默失效，排查困难。
 
 ## 配置默认值参考
 

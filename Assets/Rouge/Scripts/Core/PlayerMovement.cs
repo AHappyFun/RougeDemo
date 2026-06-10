@@ -6,7 +6,6 @@ namespace Rouge
     public class PlayerMovement : MonoBehaviour
     {
         public float speed = 6f;
-        public float bounds = 23f;
         public PlayerStats stats;
 
         private NavMeshAgent agent;
@@ -42,17 +41,6 @@ namespace Rouge
                 transform.position += move;
             }
 
-            // Clamp to world bounds
-            Vector3 pos = transform.position;
-            pos.x = Mathf.Clamp(pos.x, -bounds, bounds);
-            pos.z = Mathf.Clamp(pos.z, -bounds, bounds);
-            if (pos != transform.position)
-            {
-                if (agent != null && agent.isOnNavMesh)
-                    agent.Warp(pos);
-                else
-                    transform.position = pos;
-            }
         }
     }
 }

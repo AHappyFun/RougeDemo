@@ -16,14 +16,10 @@ namespace Rouge
             spawnTime = Time.time;
         }
 
-        private const float MaxDistance = 40f;
-
         protected virtual void Update()
         {
             if (GameManager.IsPaused) return;
             if (Time.time - spawnTime > lifetime) { Destroy(gameObject); return; }
-            if (Vector3.Distance(transform.position, Vector3.zero) > MaxDistance)
-                Destroy(gameObject);
         }
 
         protected virtual void OnTriggerEnter(Collider other)
