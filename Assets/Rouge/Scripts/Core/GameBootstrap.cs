@@ -1,13 +1,16 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Rendering.Universal;
 
 namespace Rouge
 {
     public class GameBootstrap : MonoBehaviour
     {
         [Header("Configs")]
-        public GameConfig config;
+        public GameConfig gameConfig;
+        public BulletConfig bulletConfig;
         public WaveConfig waveConfig;
+        public UpgradeConfig upgradeConfig;
 
         public float orthoSize = 8f;
         public Color backgroundColor = new Color(0.1f, 0.1f, 0.15f);
@@ -15,22 +18,30 @@ namespace Rouge
         private void Awake()
         {
             // Load configs from Resources if Inspector refs are missing
-            if (config == null) config = Resources.Load<GameConfig>("GameConfig");
+            if (gameConfig == null) gameConfig = Resources.Load<GameConfig>("GameConfig");
+            if (bulletConfig == null) bulletConfig = Resources.Load<BulletConfig>("BulletConfig");
             if (waveConfig == null) waveConfig = Resources.Load<WaveConfig>("WaveConfig");
+            if (upgradeConfig == null) upgradeConfig = Resources.Load<UpgradeConfig>("UpgradeConfig");
 
-            if (config != null)
+            if (gameConfig != null)
             {
-                orthoSize = config.cameraOrthoSize;
-                backgroundColor = config.backgroundColor;
+                orthoSize = gameConfig.cameraOrthoSize;
+                backgroundColor = gameConfig.backgroundColor;
             }
             SetupCamera();
-            // Build scene if not loaded from .unity file
             if (GameObject.Find("Floor") == null) SceneBuilder.Build();
+
+            var bulletsRoot = new GameObject("Bullets").transform;
+            var enemiesRoot = new GameObject("Enemies").transform;
+            new GameObject("VFX");
+
             var player = CreatePlayer();
             player.gameObject.AddComponent<PlayerMovement>();
+            var stats = player.gameObject.GetComponent<PlayerStats>();
             SetupCamera3D(player);
-            var bulletMgr = CreateBulletManager(player);
-            var enemySpawner = CreateEnemySpawner();
+            var bulletMgr = CreateBulletManager(player, bulletsRoot, stats);
+            bulletMgr.bulletParent = bulletsRoot;
+            var enemySpawner = CreateEnemySpawner(enemiesRoot);
             var gameMgr = CreateGameManager(bulletMgr, enemySpawner);
             var canvas = CreateUI(gameMgr);
             var waveMgr = CreateWaveManager(bulletMgr, enemySpawner, gameMgr, canvas);
@@ -60,6 +71,11 @@ namespace Rouge
             cam.fieldOfView = 45f;
             cam.transform.position = new Vector3(player.position.x, 18f, player.position.z);
             cam.transform.rotation = Quaternion.Euler(70, 0, 0);
+
+            // Enable URP post-processing
+            var data = cam.GetUniversalAdditionalCameraData();
+            data.renderPostProcessing = true;
+
             var cf = cam.gameObject.AddComponent<CameraFollow>();
             cf.target = player;
             cf.height = 18f;
@@ -70,27 +86,75 @@ namespace Rouge
             var go = MeshGenerator.CreatePlayer(Color.white, 1.2f);
             go.transform.position = new Vector3(0, 0.5f, 0);
 
+            var stats = go.AddComponent<PlayerStats>();
+            stats.maxHP = gameConfig != null ? gameConfig.playerMaxHP : 100;
+            stats.currentHP = stats.maxHP;
+
+            // 从 BulletConfig 同步子弹属性到 PlayerStats（Inspector 可查看/调试）
+            if (bulletConfig != null)
+            {
+                stats.straightCategory = bulletConfig.straight.category;
+                stats.straightDamage = bulletConfig.straight.damage;
+                stats.straightCooldown = bulletConfig.straight.cooldown;
+                stats.straightSpeed = bulletConfig.straight.speed;
+                stats.straightColor = bulletConfig.straight.color;
+
+                stats.orbitalCategory = bulletConfig.orbital.category;
+                stats.orbitalDamage = bulletConfig.orbital.damage;
+                stats.orbitalCooldown = bulletConfig.orbital.cooldown;
+                stats.orbitalDuration = bulletConfig.orbital.duration;
+                stats.orbitalSpeed = bulletConfig.orbital.speed;
+                stats.orbitalCount = bulletConfig.orbital.count;
+                stats.orbitalRadius = bulletConfig.orbital.radius;
+                stats.orbitalColor = bulletConfig.orbital.color;
+
+                stats.ricochetCategory = bulletConfig.ricochet.category;
+                stats.ricochetDamage = bulletConfig.ricochet.damage;
+                stats.ricochetCooldown = bulletConfig.ricochet.cooldown;
+                stats.ricochetSpeed = bulletConfig.ricochet.speed;
+                stats.ricochetBounces = bulletConfig.ricochet.maxBounces;
+                stats.ricochetColor = bulletConfig.ricochet.color;
+
+                stats.shotgunCategory = bulletConfig.shotgun.category;
+                stats.shotgunDamage = bulletConfig.shotgun.damage;
+                stats.shotgunCooldown = bulletConfig.shotgun.cooldown;
+                stats.shotgunSpeed = bulletConfig.shotgun.speed;
+                stats.shotgunCount = bulletConfig.shotgun.count;
+                stats.shotgunSpread = bulletConfig.shotgun.spreadAngle;
+                stats.shotgunColor = bulletConfig.shotgun.color;
+
+                stats.chainCategory = bulletConfig.chain.category;
+                stats.chainDamage = bulletConfig.chain.damage;
+                stats.chainCooldown = bulletConfig.chain.cooldown;
+                stats.chainSpeed = bulletConfig.chain.speed;
+                stats.chainHops = bulletConfig.chain.maxHops;
+                stats.chainRange = bulletConfig.chain.chainRange;
+                stats.chainColor = bulletConfig.chain.color;
+            }
+
             var ph = go.AddComponent<PlayerHealth>();
-            ph.maxHP = config != null ? config.playerMaxHP : 100;
+            ph.stats = stats;
 
             return go.transform;
         }
 
-        private BulletManager CreateBulletManager(Transform player)
+        private BulletManager CreateBulletManager(Transform player, Transform parent, PlayerStats stats)
         {
             var go = new GameObject("BulletManager");
+            go.transform.SetParent(parent);
             var bm = go.AddComponent<BulletManager>();
             bm.playerTransform = player;
-            bm.config = config;
+            bm.bulletConfig = bulletConfig;
+            bm.InitStats(stats);
             return bm;
         }
 
-        private EnemySpawner CreateEnemySpawner()
+        private EnemySpawner CreateEnemySpawner(Transform parent)
         {
             var go = new GameObject("EnemySpawner");
+            go.transform.SetParent(parent);
             var es = go.AddComponent<EnemySpawner>();
-            es.config = config;
-            es.contactDamage = config != null ? config.enemyContactDamage : 10;
+            es.gameConfig = gameConfig;
             return es;
         }
 
@@ -100,7 +164,6 @@ namespace Rouge
             var gm = go.AddComponent<GameManager>();
             gm.bulletManager = bm;
             gm.enemySpawner = es;
-            gm.config = config;
             return gm;
         }
 
@@ -108,7 +171,8 @@ namespace Rouge
         {
             var go = new GameObject("WaveManager");
             var wm = go.AddComponent<WaveManager>();
-            wm.config = waveConfig;
+            wm.waveConfig = waveConfig;
+            wm.upgradeConfig = upgradeConfig;
             wm.Init(bm, es, gm, canvas);
             return wm;
         }
@@ -127,28 +191,23 @@ namespace Rouge
 
             Font font = Font.CreateDynamicFontFromOSFont("Arial", 12);
 
-            // Bullet type (top-left)
-            gm.bulletTypeText = MakeText("BulletTypeText", canvasGO.transform,
-                "1:Straight[ON]  2:Orbital[ON]  3:Ricochet[ON]  4:Shotgun[ON]  5:Chain[ON]", font, 18, TextAnchor.UpperLeft,
-                new Vector2(0, 1), new Vector2(0, 1), new Vector2(10, -10));
-
             // Stats (top-right)
             gm.statsText = MakeText("StatsText", canvasGO.transform,
-                "Enemies: 0  Kills: 0", font, 20, TextAnchor.UpperRight,
-                new Vector2(1, 1), new Vector2(1, 1), new Vector2(-10, -10));
+                "Enemies: 0  Kills: 0", font, 18, TextAnchor.UpperRight,
+                new Vector2(1, 1), new Vector2(1, 1), new Vector2(-15, -10));
 
             // Player HP (top-center)
             gm.playerHPText = MakeText("PlayerHPText", canvasGO.transform,
-                "HP: 100%", font, 22, TextAnchor.UpperCenter,
-                new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -10));
+                "HP: 100%", font, 20, TextAnchor.UpperCenter,
+                new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -8));
 
-            // Cooldown bar
+            // Cooldown bar (below HP text)
             var barBG = MakeImage("CooldownBarBG", canvasGO.transform, new Color(0.2f, 0.2f, 0.2f));
             var barBGRT = barBG.GetComponent<RectTransform>();
             barBGRT.anchorMin = barBGRT.anchorMax = new Vector2(0.5f, 1f);
             barBGRT.pivot = new Vector2(0.5f, 1f);
-            barBGRT.anchoredPosition = new Vector2(0, -60);
-            barBGRT.sizeDelta = new Vector2(200, 16);
+            barBGRT.anchoredPosition = new Vector2(0, -70);
+            barBGRT.sizeDelta = new Vector2(180, 12);
 
             var barFill = MakeImage("CooldownBarFill", barBG.transform, Color.green);
             var barFillRT = barFill.GetComponent<RectTransform>();
@@ -166,11 +225,6 @@ namespace Rouge
             gm.fpsText = MakeText("FPSText", canvasGO.transform,
                 "FPS: 0", font, 16, TextAnchor.LowerLeft,
                 new Vector2(0, 0), new Vector2(0, 0), new Vector2(10, 10));
-
-            // Help text
-            MakeText("HelpText", canvasGO.transform,
-                "Press 1-5 to toggle bullet types", font, 16, TextAnchor.LowerCenter,
-                new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 10));
 
             // === GameOver Panel ===
             var panel = new GameObject("GameOverPanel");

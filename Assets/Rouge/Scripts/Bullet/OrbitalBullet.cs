@@ -11,7 +11,7 @@ namespace Rouge
         public void Init(int index, int total, float radius, float rotateSpeed)
         {
             damage = 10;
-            lifetime = float.MaxValue;
+            lifetime = 120f;
         }
 
         protected override void OnTriggerEnter(Collider other)
@@ -27,7 +27,6 @@ namespace Rouge
             lastDamageTimes[health] = Time.time;
 
             health.TakeDamage(damage);
-            OnHitEnemy(other);
         }
     }
 }

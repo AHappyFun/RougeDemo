@@ -1,4 +1,5 @@
 using UnityEngine;
+using Unity.AI.Navigation;
 
 namespace Rouge
 {
@@ -45,7 +46,14 @@ namespace Rouge
                 box.transform.localScale = new Vector3(w, h, d);
                 box.transform.localRotation = Quaternion.Euler(0, Random.Range(0f, 90f), 0);
                 SetColor(box, ObstacleColor);
+                // Mark as NavMesh obstacle (area 1 = Not Walkable)
+                var mod = box.AddComponent<NavMeshModifier>();
+                mod.overrideArea = true;
+                mod.area = 1;
             }
+
+            // ── Bake NavMesh ──
+            BakeNavMesh();
         }
 
         private static void BuildWall(string name, Vector3 position, Vector3 scale)
@@ -56,6 +64,18 @@ namespace Rouge
             wall.transform.position = position;
             wall.transform.localScale = scale;
             SetColor(wall, WallColor);
+            // Mark as NavMesh obstacle (area 1 = Not Walkable)
+            var mod = wall.AddComponent<NavMeshModifier>();
+            mod.overrideArea = true;
+            mod.area = 1;
+        }
+
+        private static void BakeNavMesh()
+        {
+            var navGO = new GameObject("NavMeshSurface");
+            var surface = navGO.AddComponent<NavMeshSurface>();
+            surface.collectObjects = CollectObjects.All;
+            surface.BuildNavMesh();
         }
 
         private static void SetColor(GameObject go, Color color)

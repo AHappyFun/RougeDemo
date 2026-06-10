@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1a9f41cd01fed8409ed58ccb513fdbe, type: 3}
+  m_Name: UpgradeConfig
+  m_EditorClassIdentifier:
+  upgrades:
+  - type: 0
+    displayName: "剑气强化"
+    desc: "飞剑伤害 +30%"
+    value: 30
+    color: {r: 1, g: 0.3, b: 0.2, a: 1}
+  - type: 1
+    displayName: "御剑如风"
+    desc: "所有技能冷却 -20%"
+    value: 20
+    color: {r: 0.3, g: 0.6, b: 1, a: 1}
+  - type: 2
+    displayName: "疾风剑意"
+    desc: "普攻攻速 +25%"
+    value: 20
+    color: {r: 0.2, g: 0.9, b: 0.8, a: 1}
+  - type: 3
+    displayName: "玄门心法"
+    desc: "技能冷却缩减 -15%"
+    value: 15
+    color: {r: 0.4, g: 0.5, b: 0.9, a: 1}
+  - type: 4
+    displayName: "万剑归宗"
+    desc: "子弹数量 +1"
+    value: 1
+    color: {r: 1, g: 0.7, b: 0.1, a: 1}
+  - type: 5
+    displayName: "灵气复苏"
+    desc: "恢复 30% 生命"
+    value: 30
+    color: {r: 0.2, g: 1, b: 0.3, a: 1}
+  - type: 6
+    displayName: "流星赶月"
+    desc: "飞剑速度 +25%"
+    value: 25
+    color: {r: 0.8, g: 0.4, b: 1, a: 1}

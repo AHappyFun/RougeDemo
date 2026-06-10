@@ -5,8 +5,8 @@ namespace Rouge
     public class RicochetBullet : BaseBullet
     {
         private Vector3 direction;
-        private int bounceCount;
         private int maxBounces = 5;
+        private int bounceCount;
         private Camera cam;
 
         public void Init(Vector3 dir, int maxBouncesOverride = -1)
@@ -35,6 +35,7 @@ namespace Rouge
             Vector3 viewport = cam.WorldToViewportPoint(transform.position);
             bool bounced = false;
 
+            // 只在窗口边界反弹，穿过敌人不转向
             if (viewport.x < 0f) { direction.x = Mathf.Abs(direction.x); bounced = true; }
             else if (viewport.x > 1f) { direction.x = -Mathf.Abs(direction.x); bounced = true; }
             if (viewport.y < 0f) { direction.z = Mathf.Abs(direction.z); bounced = true; }
@@ -48,13 +49,7 @@ namespace Rouge
             }
         }
 
-        protected override void OnHitEnemy(Collider enemy)
-        {
-            Vector3 rand = Random.insideUnitSphere;
-            direction = new Vector3(rand.x, 0f, rand.z).normalized;
-            UpdateFacing();
-            bounceCount++;
-            if (bounceCount >= maxBounces) Destroy(gameObject);
-        }
+        // 穿透敌人，不反弹
+        protected override void OnHitEnemy(Collider enemy) { }
     }
 }

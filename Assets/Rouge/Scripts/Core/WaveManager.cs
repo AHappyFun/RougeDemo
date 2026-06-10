@@ -6,19 +6,23 @@ namespace Rouge
 {
     public class WaveManager : MonoBehaviour
     {
-        [Header("Config")]
-        public WaveConfig config;
+        [Header("Configs")]
+        public WaveConfig waveConfig;
+        public UpgradeConfig upgradeConfig;
 
         // Runtime state
         public int CurrentWave { get; private set; } = 1;
-        public int KillsThisWave { get; private set; }
-        public int KillsNeeded { get; private set; } = 100;
+        public int XpThisWave { get; private set; }
+        public int XpNeeded { get; private set; } = 80;
 
         // Multipliers applied from upgrades (cumulative)
         public float DamageMultiplier { get; private set; } = 1f;
         public float CooldownMultiplier { get; private set; } = 1f;
         public int BulletCountBonus { get; private set; }
         public float BulletSpeedMultiplier { get; private set; } = 1f;
+
+        // Skill cooldown multiplier (separate from attack speed)
+        public float SkillCooldownMultiplier { get; private set; } = 1f;
 
         // Enemy scaling per wave
         public float EnemyHPMultiplier { get; private set; } = 1f;
@@ -51,15 +55,15 @@ namespace Rouge
 
         private void ApplyConfig()
         {
-            if (config != null)
-                KillsNeeded = config.killsPerWave;
+            if (waveConfig != null)
+                XpNeeded = waveConfig.killsPerWave;
         }
 
-        public void OnKill()
+        public void OnXpGain(int xp)
         {
             if (isUpgrading) return;
-            KillsThisWave++;
-            if (KillsThisWave >= KillsNeeded)
+            XpThisWave += xp;
+            if (XpThisWave >= XpNeeded)
                 TriggerWaveUp();
         }
 
@@ -75,8 +79,8 @@ namespace Rouge
             upgradePanel.SetActive(true);
 
             // Pick 3 random upgrades
-            var pool = config != null && config.upgrades.Count > 0
-                ? config.upgrades
+            var pool = upgradeConfig != null && upgradeConfig.upgrades.Count > 0
+                ? upgradeConfig.upgrades
                 : GetDefaultUpgrades();
 
             var shuffled = new List<UpgradeDef>(pool);
@@ -121,6 +125,13 @@ namespace Rouge
                     break;
                 case UpgradeType.CooldownDown:
                     CooldownMultiplier *= 1f - def.value / 100f;
+                    SkillCooldownMultiplier *= 1f - def.value / 100f;
+                    break;
+                case UpgradeType.AttackSpeedUp:
+                    CooldownMultiplier *= 1f - def.value / 100f;
+                    break;
+                case UpgradeType.SkillCooldownDown:
+                    SkillCooldownMultiplier *= 1f - def.value / 100f;
                     break;
                 case UpgradeType.BulletCount:
                     BulletCountBonus += (int)def.value;
@@ -159,16 +170,16 @@ namespace Rouge
         private void AdvanceWave()
         {
             CurrentWave++;
-            KillsThisWave = 0;
+            XpThisWave = 0;
 
-            if (config != null)
+            if (waveConfig != null)
             {
-                KillsNeeded = config.killsPerWave + config.killsPerWaveGrowth * (CurrentWave - 1);
-                EnemyHPMultiplier = 1f + config.hpScale * (CurrentWave - 1);
-                EnemySpeedMultiplier = 1f + config.speedScale * (CurrentWave - 1);
-                EnemySpawnRateMultiplier = Mathf.Pow(1f - config.spawnRateScale, CurrentWave - 1);
-                EnemyMaxBonus = config.maxEnemiesPerWave * (CurrentWave - 1);
-                EnemyDamageBonus = config.damagePerWave * (CurrentWave - 1);
+                XpNeeded = waveConfig.killsPerWave + waveConfig.killsPerWaveGrowth * (CurrentWave - 1);
+                EnemyHPMultiplier = 1f + waveConfig.hpScale * (CurrentWave - 1);
+                EnemySpeedMultiplier = 1f + waveConfig.speedScale * (CurrentWave - 1);
+                EnemySpawnRateMultiplier = Mathf.Pow(1f - waveConfig.spawnRateScale, CurrentWave - 1);
+                EnemyMaxBonus = waveConfig.maxEnemiesPerWave * (CurrentWave - 1);
+                EnemyDamageBonus = waveConfig.damagePerWave * (CurrentWave - 1);
             }
 
             // Push scaling to spawner
@@ -179,15 +190,17 @@ namespace Rouge
             // Push upgrade multipliers to bullet manager
             if (bulletManager != null)
                 bulletManager.ApplyUpgrades(DamageMultiplier, CooldownMultiplier,
-                    BulletCountBonus, BulletSpeedMultiplier);
+                    BulletCountBonus, BulletSpeedMultiplier, SkillCooldownMultiplier);
         }
 
-        private List<UpgradeDef> GetDefaultUpgrades()
+        private static List<UpgradeDef> GetDefaultUpgrades()
         {
             return new List<UpgradeDef>
             {
                 new UpgradeDef { type = UpgradeType.DamageUp,    displayName = "剑气强化", desc = "飞剑伤害 +30%",  value = 30f, color = new Color(1f, 0.3f, 0.2f) },
-                new UpgradeDef { type = UpgradeType.CooldownDown, displayName = "御剑如风", desc = "攻击冷却 -20%",  value = 20f, color = new Color(0.3f, 0.6f, 1f) },
+                new UpgradeDef { type = UpgradeType.CooldownDown, displayName = "御剑如风", desc = "所有技能冷却 -20%",  value = 20f, color = new Color(0.3f, 0.6f, 1f) },
+                new UpgradeDef { type = UpgradeType.AttackSpeedUp, displayName = "疾风剑意", desc = "普攻攻速 +25%",    value = 20f, color = new Color(0.2f, 0.9f, 0.8f) },
+                new UpgradeDef { type = UpgradeType.SkillCooldownDown, displayName = "玄门心法", desc = "技能冷却缩减 -15%", value = 15f, color = new Color(0.4f, 0.5f, 0.9f) },
                 new UpgradeDef { type = UpgradeType.BulletCount,  displayName = "万剑归宗", desc = "子弹数量 +1",    value = 1f,  color = new Color(1f, 0.7f, 0.1f) },
                 new UpgradeDef { type = UpgradeType.Heal,         displayName = "灵气复苏", desc = "恢复 30% 生命",  value = 30f, color = new Color(0.2f, 1f, 0.3f) },
                 new UpgradeDef { type = UpgradeType.BulletSpeed,  displayName = "流星赶月", desc = "飞剑速度 +25%",  value = 25f, color = new Color(0.8f, 0.4f, 1f) },

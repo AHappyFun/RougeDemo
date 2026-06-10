@@ -3,6 +3,8 @@ Shader "Rouge/Character"
     Properties
     {
         [HDR] _BaseColor ("Color", Color) = (1, 1, 1, 1)
+        [HDR] _HitColor ("Hit Flash Color", Color) = (1, 1, 1, 1)
+        _HitAmount ("Hit Flash Amount", Range(0, 1)) = 0
         _Metallic ("Metallic", Range(0, 1)) = 0
         _Smoothness ("Smoothness", Range(0, 1)) = 0.3
     }
@@ -41,6 +43,8 @@ Shader "Rouge/Character"
 
             CBUFFER_START(UnityPerMaterial)
             half4 _BaseColor;
+            half4 _HitColor;
+            half  _HitAmount;
             half  _Metallic;
             half  _Smoothness;
             CBUFFER_END
@@ -77,7 +81,12 @@ Shader "Rouge/Character"
                 half  spec     = pow(NdotH, lerp(1, 100, _Smoothness)) * _Metallic;
                 half3 specular = light.color * spec * _BaseColor.rgb;
 
-                half4 color = half4(diffuse + specular, _BaseColor.a);
+                half3 finalColor = diffuse + specular;
+
+                // Hit flash: lerp toward hit color
+                finalColor = lerp(finalColor, _HitColor.rgb, _HitAmount);
+
+                half4 color = half4(finalColor, _BaseColor.a);
                 color.rgb = MixFog(color.rgb, i.fogCoord);
                 return color;
             }

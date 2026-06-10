@@ -5,96 +5,29 @@ namespace Rouge
     [CreateAssetMenu(fileName = "GameConfig", menuName = "Rouge/Game Config", order = 1)]
     public class GameConfig : ScriptableObject
     {
-        [Header("Bullet Type Configs")]
-        public BulletTypeConfig straight = new BulletTypeConfig
-        {
-            typeName = "Straight",
-            cooldown = 0.3f,
-            damage = 10,
-            speed = 10f,
-            count = 1,
-            color = Color.yellow
-        };
-
-        public BulletTypeConfig orbital = new BulletTypeConfig
-        {
-            typeName = "Orbital",
-            cooldown = 0f,
-            damage = 10,
-            speed = 360f,
-            count = 3,
-            radius = 4f,
-            color = new Color(1f, 0.5f, 0f)
-        };
-
-        public BulletTypeConfig ricochet = new BulletTypeConfig
-        {
-            typeName = "Ricochet",
-            cooldown = 0.5f,
-            damage = 8,
-            speed = 8f,
-            count = 1,
-            color = Color.green
-        };
-
-        public BulletTypeConfig shotgun = new BulletTypeConfig
-        {
-            typeName = "Shotgun",
-            cooldown = 0.8f,
-            damage = 6,
-            speed = 10f,
-            count = 5,
-            color = Color.magenta
-        };
-
-        public BulletTypeConfig chain = new BulletTypeConfig
-        {
-            typeName = "Chain",
-            cooldown = 0.6f,
-            damage = 12,
-            speed = 20f,
-            count = 1,
-            color = Color.cyan
-        };
-
-        [Header("Player Config")]
+        [Header("玩家配置")]
+        [Tooltip("玩家最大生命值")]
         public int playerMaxHP = 100;
+        [Tooltip("敌人碰撞对玩家造成的伤害")]
         public int enemyContactDamage = 10;
 
-        [Header("Enemy Config")]
+        [Header("敌人生成配置")]
+        [Tooltip("场上同时存在的最大敌人数")]
         public int maxEnemies = 40;
+        [Tooltip("敌人生成间隔（秒），越小生成越快")]
         public float spawnInterval = 0.35f;
+        [Tooltip("敌人基础生命值")]
         public int enemyHP = 30;
+        [Tooltip("敌人基础移动速度")]
         public float enemySpeed = 2.5f;
+        [Tooltip("敌人默认颜色")]
         public Color enemyColor = Color.red;
 
-        [Header("Ricochet Config")]
-        public int ricochetMaxBounces = 5;
-
-        [Header("Shotgun Config")]
-        public float shotgunSpreadAngle = 60f;
-
-        [Header("Chain Config")]
-        public int chainMaxHops = 3;
-        public float chainRange = 5f;
-
-        [Header("Screen")]
-        [Range(4f, 20f)] public float cameraOrthoSize = 8f;
+        [Header("画面")]
+        [Range(4f, 20f)]
+        [Tooltip("正交相机视口大小（数值越大看到越广）")]
+        public float cameraOrthoSize = 8f;
+        [Tooltip("摄像机背景色")]
         public Color backgroundColor = new Color(0.1f, 0.1f, 0.15f);
-    }
-
-    [System.Serializable]
-    public class BulletTypeConfig
-    {
-        public string typeName;
-        [Tooltip("Seconds between shots (0 = no auto-fire, e.g. orbital)")]
-        public float cooldown;
-        public int damage;
-        public float speed;
-        [Tooltip("Bullets per shot (shotgun pellets, orbital count, etc.)")]
-        public int count;
-        [Tooltip("Orbit radius (orbital only)")]
-        public float radius = 1.5f;
-        public Color color;
     }
 }

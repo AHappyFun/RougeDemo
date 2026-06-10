@@ -7,6 +7,7 @@ namespace Rouge
     {
         public float moveSpeed = 2f;
         public int contactDamage = 10;
+        public int xpReward = 10;
 
         private Transform player;
         private NavMeshAgent agent;
@@ -20,27 +21,36 @@ namespace Rouge
             if (agent != null)
             {
                 agent.speed = moveSpeed;
-                agent.stoppingDistance = 0.3f;
                 agent.updateRotation = false;
+                if (agent.isOnNavMesh)
+                    agent.Warp(transform.position);
             }
         }
 
         private void Update()
         {
-            if (GameManager.IsPaused) return;
+            if (GameManager.IsPaused)
+            {
+                if (agent != null && agent.isOnNavMesh && !agent.isStopped)
+                    agent.isStopped = true;
+                return;
+            }
+            if (agent != null && agent.isOnNavMesh && agent.isStopped)
+                agent.isStopped = false;
+
             if (player == null) return;
 
             if (agent != null && agent.isOnNavMesh)
             {
                 agent.SetDestination(player.position);
+                transform.LookAt(player);
             }
             else
             {
-                // Fallback: direct movement when no NavMesh
                 Vector3 dir = (player.position - transform.position).normalized;
                 transform.position += dir * moveSpeed * Time.deltaTime;
+                transform.LookAt(player);
             }
-            transform.LookAt(player);
         }
 
         private void OnTriggerStay(Collider other)

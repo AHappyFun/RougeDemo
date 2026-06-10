@@ -1,6 +1,6 @@
 # Rouge Demo — 需求文档汇总
 
-**最后更新：2026-05-11**  
+**最后更新：2026-06-10**  
 **状态：全部已实现**
 
 ---
@@ -31,11 +31,10 @@
 - 子弹命中减HP，归零销毁
 
 ### 输入控制
-- 按键 1-5 切换子弹类型
-- 屏幕显示当前类型
+- 武器开关通过 PlayerStats Inspector 控制，运行时也可修改
 
 ### UI
-- 当前子弹类型 / 敌人数+击杀数 / 冷却进度条 / FPS / 敌人血条
+- 敌人数+击杀数 / 冷却进度条 / FPS / 敌人3D血条 / 玩家血条
 
 ---
 
@@ -67,7 +66,7 @@
 
 ## Round 5 — 多子弹同时发射
 
-所有子弹类型可**同时拥有并独立开火**，按键 1-5 变为 **toggle 开关**。
+所有子弹类型可**同时拥有并独立开火**，通过 PlayerStats 开关控制。
 
 ---
 
@@ -161,8 +160,10 @@
 `GameManager.IsPaused`，所有 Update() 入口检查。子类 override 必须自行检查。
 
 ### 配置
-- `GameConfig` — 子弹属性(含 orbital.radius=4)、敌人属性、屏幕参数
-- `WaveConfig` — 波次触发、敌人缩放曲线、10 个增益定义
+- `GameConfig` — 整体控制（玩家血量、敌人生成、相机参数）
+- `BulletConfig` — 子弹/技能属性（含 Category/cooldown/damage/speed/专属参数）
+- `WaveConfig` — 波次触发、敌人缩放曲线
+- `UpgradeConfig` — 增益列表 + UpgradeType 定义
 
 ### 资源目录
 ```
@@ -173,11 +174,79 @@ Resources/
 │   ├── Bullets/{Straight,Orbital,Ricochet,Shotgun,Chain,Sword}Bullet.prefab
 │   └── VFX/{HitParticles,DeathParticles}.prefab
 ├── Materials/ (11个材质，按类型分目录)
-├── GameConfig.asset
-└── WaveConfig.asset
+├── GameConfig.asset       — 整体控制
+├── BulletConfig.asset     — 子弹属性
+├── WaveConfig.asset       — 波次控制
+└── UpgradeConfig.asset    — 增益列表
 ```
 
 ### 文件清单
-- **26 个 .cs**：Core(9) + Editor(2) + Bullet(5) + Enemy(2) + Utils(3) + SceneBuilder/PlayerMovement/CameraFollow(3) + ResSceneGenerator(1)
-- **2 个 .shader**：RougeCharacter + RougeVFX
-- **2 个 .asset**：GameConfig + WaveConfig
+- **30+ 个 .cs**：Core(10) + Editor(2) + Bullet(5) + Enemy(2) + Utils(4) + SceneBuilder/PlayerMovement/CameraFollow(3)
+- **2 个 .shader**：RougeCharacter（含受击闪白） + RougeVFX
+- **4 个 .asset**：GameConfig + BulletConfig + WaveConfig + UpgradeConfig
+
+---
+
+## Round 9 — 2026-06-10 大重构：Config拆分 + 技能系统 + 数据流
+
+### 配置系统重构
+- 原 `GameConfig` + `WaveConfig` 拆分为 **4 个独立 Config**
+- `GameConfig` — 整体控制（玩家血量、敌人生成、相机）
+- `BulletConfig` — 子弹/技能属性，含 `BulletCategory` 枚举
+- `WaveConfig` — 波次触发条件 + 敌人缩放
+- `UpgradeConfig` — 增益池 + UpgradeDef + UpgradeType 定义
+- 所有 Config 有完整中文 Tooltip
+
+### Attack/Skill 分类
+- 新增 `BulletCategory` 枚举：`Attack`（常驻普攻）/ `Skill`（技能冷却）
+- Straight → Attack，其余 4 种 → Skill
+- 攻速倍率 `cooldownMult` 只影响 Attack
+- 冷却缩减 `skillCooldownMult` 只影响 Skill
+
+### Orbital 技能化
+- 持续时长 `duration`（秒）→ 冷却 `cooldown`（秒）→ 自动重新激活
+- 大剑视觉：缩放 1.2，剑身指向径向（侧面砍）
+- 修复 OrbitalBullet 碰怪自毁 bug（误调 OnHitEnemy → Destroy）
+
+### Ricochet 重做
+- 穿透敌人（不反弹），只在窗口边界反弹
+- 缩放 1.0，弹射次数耗尽销毁
+- 普攻 Straight 命中敌人销毁（不穿透）
+
+### 数据流重构（Buff 系统）
+```
+Config → PlayerStats（基础值，永不修改）
+           ↓
+   + buff 倍率（WaveManager 累积）
+           ↓
+   BulletManager 运行时值（实际游戏逻辑）
+           ↓
+   PlayerStats.runtimeXxx（Inspector 只读展示）
+```
+- 修复升级后冷却/数量叠加 bug（3→4→6）
+- 修复 Heal 多除以 100 的 bug
+- 新增 `SkillDebugPanel` 运行时调试面板（下拉查看各子弹最终属性）
+
+### 受击闪白
+- RougeCharacter.shader 新增 `_HitColor` / `_HitAmount` 属性
+- EnemyHealth 闪白协程，0.12s 白色闪烁后恢复
+
+### 删除冗余
+- 删除 `ResGenerator.cs` / `ResSceneGenerator.cs` / `AutoDestroy.cs`
+- 删除 VFX Prefab 中的 Missing Script 引用
+- VFX 改为 `stopAction=Destroy`，无需 AutoDestroy 脚本
+
+### UI
+- HUD 间距优化（HP/CD 条重叠问题）
+- PlayerStats Inspector 现含所有子弹完整属性
+- 增益池 10 → 12 种：新增"疾风剑意"(攻速+25%) / "玄门心法"(技能冷却-15%)
+
+### 修复清单
+| Bug | 原因 | 修复 |
+|-----|------|------|
+| SyncFromPlayerStats 每帧覆盖冷却 | 放在 Update() 里全量同步 | 改为仅同步开关，冷却通过 ApplyUpgrades 管理 |
+| 子弹数量 buff 叠加 (3→4→6) | SyncRuntimeToPlayerStats 写回基础字段 | 改为写入 runtimeXxx 字段 |
+| Orbital 刚出来就消失 | SyncFromPlayerStats 中 SetActive 触发 CreateOrbital 时 orbitalCount=0 | 先设 orbitalCount 再 SyncToggles |
+| Orbital 碰怪消失 | OrbitalBullet.OnTriggerEnter 调用 OnHitEnemy→Destroy | 移除 OnHitEnemy 调用 |
+| 灵气复苏回血无效 | Heal() 里多除了 100 | 移除 /100f |
+| 受击 VFX Missing Script | AutoDestroy.cs 已删但 Prefab 仍有引用 | 从 Prefab 移除了组件引用 |

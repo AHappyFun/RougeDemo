@@ -1,0 +1,84 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2de008c6a9f0704ea3357dec18fca3e, type: 3}
+  m_Name: BulletConfig
+  m_EditorClassIdentifier: 
+  straight:
+    typeName: Straight
+    category: 0
+    cooldown: 0.5
+    damage: 10
+    speed: 10
+    count: 1
+    radius: 1.5
+    duration: 0
+    color: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+    maxBounces: 3
+    spreadAngle: 60
+    maxHops: 3
+    chainRange: 5
+  orbital:
+    typeName: Orbital
+    category: 1
+    cooldown: 3
+    damage: 10
+    speed: 360
+    count: 3
+    radius: 4
+    duration: 5
+    color: {r: 1, g: 0.5, b: 0, a: 1}
+    maxBounces: 3
+    spreadAngle: 60
+    maxHops: 3
+    chainRange: 5
+  ricochet:
+    typeName: Ricochet
+    category: 1
+    cooldown: 3
+    damage: 8
+    speed: 8
+    count: 1
+    radius: 1.5
+    duration: 0
+    color: {r: 0, g: 1, b: 0, a: 1}
+    maxBounces: 5
+    spreadAngle: 60
+    maxHops: 3
+    chainRange: 5
+  shotgun:
+    typeName: Shotgun
+    category: 0
+    cooldown: 1
+    damage: 6
+    speed: 10
+    count: 5
+    radius: 1.5
+    duration: 0
+    color: {r: 1, g: 0, b: 1, a: 1}
+    maxBounces: 3
+    spreadAngle: 60
+    maxHops: 3
+    chainRange: 5
+  chain:
+    typeName: Chain
+    category: 1
+    cooldown: 3
+    damage: 12
+    speed: 20
+    count: 1
+    radius: 1.5
+    duration: 0
+    color: {r: 0, g: 1, b: 1, a: 1}
+    maxBounces: 3
+    spreadAngle: 60
+    maxHops: 3
+    chainRange: 5

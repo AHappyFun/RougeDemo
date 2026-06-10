@@ -20,9 +20,8 @@
 - 使用 `GameObject.FindGameObjectWithTag("Player"/"Enemy")` 查找运行时对象
 
 ### Prefab 系统（Resources/）
-- 生成：Unity Editor 中菜单 "Rouge → Generate Assets" 一键生成全部 prefab + material
+- 通过 Unity MCP 工具在 Editor 中直接创建/编辑 prefab 和 material
 - 加载：`MeshGenerator` 内部通过 `Resources.Load<T>()` 加载，**调用方代码无需感知**
-- 编辑 prefab 后重新运行 "Generate Assets" 覆盖即可
 - 结构：
   ```
   Resources/
@@ -52,17 +51,24 @@
 - 所有 `Update()` 入口必须在最开头检查 `if (GameManager.IsPaused) return;`
 - 注意：子类 `override Update()` 中，`base.Update()` 的 early return 不能阻止子类后续代码执行，必须子类自己也加检查
 
-### 配置系统
-- 通用参数 → `GameConfig` ScriptableObject（子弹属性、敌人基础属性、屏幕参数）
-- 波次相关 → `WaveConfig` ScriptableObject（波次触发条件、敌人缩放曲线、增益池）
+### 配置系统（4 个独立 Config）
+- `GameConfig` — 游戏整体控制（玩家血量、敌人生成、相机参数）
+- `BulletConfig` — 子弹/技能属性（5 种子弹配置、专属参数）
+- `WaveConfig` — 波次控制（触发条件、敌人缩放曲线）
+- `UpgradeConfig` — 增益列表（所有 UpgradeDef + UpgradeType 定义）
 - 配置存放在 `Res/` 目录下
 - 配置从 ScriptableObject 读取后缓存为字段，运行时直接访问字段（不每帧读配置）
 
 ### 子弹系统
 - 5 种子弹类型：Straight / Orbital / Ricochet / Shotgun / Chain
+- 分类：`BulletCategory` 枚举区分 **Attack（常驻普攻）** 和 **Skill（技能）**
+  - Straight → Attack（受攻速影响）
+  - Orbital / Ricochet / Shotgun / Chain → Skill（受冷却缩减影响）
 - 所有类型同时开火，用 `HashSet<BulletType> activeTypes` 管理
 - 按键 1-5 独立 toggle（ON/OFF）
 - `BulletManager` 管理全部子弹发射、冷却、增益
+  - `cooldownMult` → 影响 Attack 类型的攻速间隔
+  - `skillCooldownMult` → 影响 Skill 类型的冷却时间
 - 子弹继承结构：`BaseBullet` → `StraightBullet / OrbitalBullet / RicochetBullet / ChainBullet`
 - 子类 `override Update()` 必须手动检查 `IsPaused`
 - Orbital 环绕特殊处理：由 BulletManager.UpdateOrbital() 驱动，Create/DestroyOrbital() 管理生命周期
@@ -103,15 +109,17 @@
 ```
 Assets/Rouge/
 ├── Scripts/
-│   ├── Core/      — 入口、管理器、配置（8 个 .cs）
+│   ├── Core/      — 入口、管理器、配置（10 个 .cs）
 │   ├── Bullet/    — 子弹类（5 个 .cs）
 │   ├── Enemy/     — 敌人相关（2 个 .cs）
-│   ├── Editor/    — 编辑器工具（ResGenerator.cs）
+│   ├── Editor/    — 编辑器工具
 │   └── Utils/     — 工具、扩展（3 个 .cs）
 ├── Res/
 │   ├── Resources/ — 运行时加载的 Prefab 和 Material
-│   ├── GameConfig.asset
-│   └── WaveConfig.asset
+│   ├── GameConfig.asset      — 整体控制
+│   ├── BulletConfig.asset    — 子弹属性
+│   ├── WaveConfig.asset      — 波次控制
+│   └── UpgradeConfig.asset   — 增益列表
 ├── Scene/         — Unity 场景文件
 └── Resources/     — Unity Resources 目录（如有）
 ```
