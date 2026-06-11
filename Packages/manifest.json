@@ -43,7 +43,8 @@
     "com.unity.modules.video": "1.0.0",
     "com.unity.modules.vr": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
-    "com.unity.modules.xr": "1.0.0"
+    "com.unity.modules.xr": "1.0.0",
+    "com.ivanmurzak.unity.mcp.particlesystem": "1.2.17"
   },
   "scopedRegistries": [
     {
@@ -51,7 +52,11 @@
       "url": "https://package.openupm.com",
       "scopes": [
         "com.ivanmurzak",
-        "extensions.unity"
+        "extensions.unity",
+        "org.nuget.com.ivanmurzak",
+        "org.nuget.microsoft",
+        "org.nuget.system",
+        "org.nuget.r3"
       ]
     }
   ]

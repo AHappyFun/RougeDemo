@@ -94,7 +94,7 @@ namespace Rouge
             cachedStats = stats;
             if (stats == null) return;
 
-            // 先设置轨道参数，再同步开关（toggle 可能触发 CreateOrbital）
+            // 先设置轨道参数（注意：此处不能调 SyncTogglesFromPlayerStats——原因见下文）
             orbitalCount = stats.orbitalCount + countBonus;
             orbitalRadius = stats.orbitalRadius;
             orbitalSpeed = stats.orbitalSpeed + orbitalSpeedBonus;
@@ -107,7 +107,10 @@ namespace Rouge
             chainMaxHops = stats.chainHops + chainHopsBonus;
             chainRange = stats.chainRange + chainRangeBonus;
 
-            SyncTogglesFromPlayerStats(stats);  // 可能会触发 CreateOrbital()，此时 orbitalCount 已就绪
+            // 注意：不能在 SyncFromPlayerStats 里调 SyncTogglesFromPlayerStats——
+            // 因为 ToggleBulletType(Orbital) 会触发 CreateOrbital()，但此时
+            // orbitalBullets 数组还未分配（在下一段分配），导致创建的子弹成为孤儿。
+            // SyncTogglesFromPlayerStats 由 Update() 每帧调用，无需在此重复。
 
             // 冷却/攻速 = 基础值 × 累积倍率
             cooldowns[(int)BulletType.Straight]  = stats.straightCooldown * cooldownMult;
