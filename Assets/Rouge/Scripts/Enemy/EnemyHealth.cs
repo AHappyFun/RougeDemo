@@ -20,11 +20,28 @@ namespace Rouge
         private MaterialPropertyBlock mpb;
         private Coroutine flashRoutine;
 
-        private void Start()
+        private void Awake()
+        {
+            rend = GetComponentInChildren<Renderer>();
+            mpb = new MaterialPropertyBlock();
+        }
+
+        private void OnEnable()
         {
             currentHealth = maxHealth;
-            rend = GetComponent<Renderer>();
-            mpb = new MaterialPropertyBlock();
+            // 对象池复用：清除上一轮残留的受击闪白
+            if (rend != null)
+            {
+                rend.GetPropertyBlock(mpb);
+                mpb.SetFloat("_HitAmount", 0f);
+                rend.SetPropertyBlock(mpb);
+            }
+        }
+
+        /// <summary>由 EnemySpawner 在设完 maxHealth 后调用，确保 currentHealth 同步</summary>
+        public void ResetHealth()
+        {
+            currentHealth = maxHealth;
         }
 
         public void TakeDamage(int damage)
@@ -36,13 +53,13 @@ namespace Rouge
                 int xp = GetComponent<BaseEnemy>()?.xpReward ?? 10;
                 MeshGenerator.SpawnDeathParticles(transform.position, deathColor);
                 GameManager.Instance?.AddKill(xp);
-                Destroy(gameObject);
+                ObjectPool.Return(gameObject);
             }
         }
 
         private void Flash()
         {
-            if (rend == null) return;
+            if (rend == null || !gameObject.activeInHierarchy) return;
 
             if (flashRoutine != null)
                 StopCoroutine(flashRoutine);
@@ -51,14 +68,12 @@ namespace Rouge
 
         private IEnumerator FlashRoutine()
         {
-            // 闪白
             rend.GetPropertyBlock(mpb);
             mpb.SetFloat("_HitAmount", 1f);
             rend.SetPropertyBlock(mpb);
 
             yield return new WaitForSeconds(flashDuration);
 
-            // 恢复
             if (rend != null)
             {
                 rend.GetPropertyBlock(mpb);

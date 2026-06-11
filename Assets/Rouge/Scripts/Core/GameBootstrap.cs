@@ -36,7 +36,7 @@ namespace Rouge
             new GameObject("VFX");
 
             var player = CreatePlayer();
-            player.gameObject.AddComponent<PlayerMovement>();
+            // PlayerMovement 等组件已在 Prefab 中
             var stats = player.gameObject.GetComponent<PlayerStats>();
             SetupCamera3D(player);
             var bulletMgr = CreateBulletManager(player, bulletsRoot, stats);

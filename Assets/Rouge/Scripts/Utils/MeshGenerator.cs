@@ -70,15 +70,9 @@ namespace Rouge
 
             var go = Object.Instantiate(_playerPrefab);
             go.name = "Player";
+            go.tag = "Player";
             go.transform.localScale = Vector3.one * scale;
 
-            var smr = go.GetComponentInChildren<SkinnedMeshRenderer>();
-            if (smr != null) smr.material.SetColor("_BaseColor", color);
-            else
-            {
-                var mr = go.GetComponent<MeshRenderer>();
-                if (mr != null) mr.material.SetColor("_BaseColor", color);
-            }
             return go;
         }
 
@@ -160,40 +154,59 @@ namespace Rouge
         {
             if (_hitParticlePrefab == null)
                 _hitParticlePrefab = Resources.Load<GameObject>("Prefabs/VFX/HitParticles");
-
-            if (_hitParticlePrefab != null)
+            if (_hitParticlePrefab == null)
             {
-                var go = Object.Instantiate(_hitParticlePrefab, position, Quaternion.identity);
-                go.name = "HitParticles";
-                var vfxGo = GameObject.Find("VFX");
-                if (vfxGo != null) go.transform.SetParent(vfxGo.transform);
-                var ps = go.GetComponent<ParticleSystem>();
-                var m = ps.main; m.startColor = color;
-                ps.Play();
-                return go;
+                Debug.LogError("[MeshGenerator] Missing Prefabs/VFX/HitParticles");
+                return null;
             }
-            Debug.LogError("[MeshGenerator] Missing Prefabs/VFX/HitParticles");
-            return null;
+
+            var go = ObjectPool.Get("HitParticles", _hitParticlePrefab);
+            go.transform.position = position;
+            go.transform.rotation = Quaternion.identity;
+            go.name = "HitParticles";
+
+            var vfxGo = GameObject.Find("VFX");
+            if (vfxGo != null) go.transform.SetParent(vfxGo.transform);
+
+            // 确保有 PooledParticle 组件（第一次添加后永久保留）
+            if (go.GetComponent<PooledParticle>() == null)
+                go.AddComponent<PooledParticle>();
+
+            var ps = go.GetComponent<ParticleSystem>();
+            var m = ps.main; m.startColor = color;
+
+            go.SetActive(true);
+            ps.Play();
+            return go;
         }
 
         public static GameObject SpawnDeathParticles(Vector3 position, Color color)
         {
             if (_deathParticlePrefab == null)
                 _deathParticlePrefab = Resources.Load<GameObject>("Prefabs/VFX/DeathParticles");
-
-            if (_deathParticlePrefab != null)
+            if (_deathParticlePrefab == null)
             {
-                var go = Object.Instantiate(_deathParticlePrefab, position, Quaternion.identity);
-                go.name = "DeathParticles";
-                var vfxGo = GameObject.Find("VFX");
-                if (vfxGo != null) go.transform.SetParent(vfxGo.transform);
-                var ps = go.GetComponent<ParticleSystem>();
-                var m = ps.main; m.startColor = color;
-                ps.Play();
-                return go;
+                Debug.LogError("[MeshGenerator] Missing Prefabs/VFX/DeathParticles");
+                return null;
             }
-            Debug.LogError("[MeshGenerator] Missing Prefabs/VFX/DeathParticles");
-            return null;
+
+            var go = ObjectPool.Get("DeathParticles", _deathParticlePrefab);
+            go.transform.position = position;
+            go.transform.rotation = Quaternion.identity;
+            go.name = "DeathParticles";
+
+            var vfxGo = GameObject.Find("VFX");
+            if (vfxGo != null) go.transform.SetParent(vfxGo.transform);
+
+            if (go.GetComponent<PooledParticle>() == null)
+                go.AddComponent<PooledParticle>();
+
+            var ps = go.GetComponent<ParticleSystem>();
+            var m = ps.main; m.startColor = color;
+
+            go.SetActive(true);
+            ps.Play();
+            return go;
         }
 
         // =====================================================

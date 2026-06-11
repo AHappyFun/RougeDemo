@@ -9,11 +9,13 @@ namespace Rouge
 
         private float lastDamageTime;
         private const float DamageCooldown = 0.5f;
+        private PlayerAnimController animController;
 
         private void Start()
         {
             if (stats == null) stats = GetComponent<PlayerStats>();
             if (stats != null) stats.currentHP = stats.maxHP;
+            animController = GetComponent<PlayerAnimController>();
         }
 
         public bool IsDead => stats != null && stats.currentHP <= 0;
@@ -34,7 +36,12 @@ namespace Rouge
             if (stats.currentHP <= 0)
             {
                 stats.currentHP = 0;
+                if (animController != null) animController.PlayDead();
                 GameManager.Instance?.TriggerGameOver();
+            }
+            else
+            {
+                if (animController != null) animController.PlayHurt();
             }
         }
     }

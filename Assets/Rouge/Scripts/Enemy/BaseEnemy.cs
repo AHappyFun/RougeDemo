@@ -11,13 +11,16 @@ namespace Rouge
 
         private Transform player;
         private NavMeshAgent agent;
+        private Animator animator;
         private float lastDamageTime;
         private const float DamageCD = 1f;
+        private Vector3 lastPosition;
 
         private void Start()
         {
             player = GameObject.FindGameObjectWithTag("Player")?.transform;
             agent = GetComponent<NavMeshAgent>();
+            animator = GetComponent<Animator>();
             if (agent != null)
             {
                 agent.speed = moveSpeed;
@@ -25,6 +28,7 @@ namespace Rouge
                 if (agent.isOnNavMesh)
                     agent.Warp(transform.position);
             }
+            lastPosition = transform.position;
         }
 
         private void Update()
@@ -51,6 +55,12 @@ namespace Rouge
                 transform.position += dir * moveSpeed * Time.deltaTime;
                 transform.LookAt(player);
             }
+
+            // 动画速度参数：是否在移动
+            float speed = Vector3.Distance(transform.position, lastPosition) / Time.deltaTime;
+            if (animator != null)
+                animator.SetFloat("speed", speed > 0.1f ? 1f : 0f);
+            lastPosition = transform.position;
         }
 
         private void OnTriggerStay(Collider other)

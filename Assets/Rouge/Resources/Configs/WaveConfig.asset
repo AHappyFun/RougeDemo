@@ -11,11 +11,11 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ea3a3d333f8fb1041abd7c155e007b09, type: 3}
   m_Name: WaveConfig
-  m_EditorClassIdentifier:
-  killsPerWave: 80
-  killsPerWaveGrowth: 10
-  hpScale: 0.35
+  m_EditorClassIdentifier: 
+  killsPerWave: 150
+  killsPerWaveGrowth: 30
+  hpScale: 0.2
   speedScale: 0.1
   spawnRateScale: 0.12
   maxEnemiesPerWave: 4
-  damagePerWave: 2
+  damagePerWave: 1
