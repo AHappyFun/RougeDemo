@@ -20,7 +20,6 @@ namespace Rouge
         public Text playerHPText;
         public GameObject gameOverPanel;
         public Text gameOverText;
-
         private int killCount;
         private int totalXp;
         private float[] fpsSamples = new float[30];
@@ -91,6 +90,7 @@ namespace Rouge
 
         public void TriggerGameOver()
         {
+            UpdateUI(); // 死亡前刷新 UI，确保显示 0/100 而不是卡在上一次的值
             isGameOver = true;
             if (enemySpawner != null) enemySpawner.enabled = false;
             if (bulletManager != null) bulletManager.enabled = false;

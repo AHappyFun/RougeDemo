@@ -5,7 +5,7 @@ Shader "Rouge/Character"
         [MainTexture]  _BaseMap     ("Main Texture", 2D) = "white" {}
         [MainColor]    _BaseColor   ("Color", Color) = (1, 1, 1, 1)
         _Metallic      ("Metallic", Range(0, 1)) = 0
-        _Smoothness    ("Smoothness", Range(0, 1)) = 0.3
+        _Smoothness    ("Smoothness", Range(0, 1)) = 0
         [HDR] _HitColor   ("Hit Flash Color", Color) = (1, 1, 1, 1)
         _HitAmount     ("Hit Flash Amount", Range(0, 1)) = 0
     }
@@ -15,7 +15,7 @@ Shader "Rouge/Character"
         Tags { "RenderType"="Opaque" "RenderPipeline"="UniversalPipeline" }
         LOD 100
 
-        // ── ShadowCaster (depth pass) ──
+        // ── ShadowCaster ──
         Pass
         {
             Name "ShadowCaster"
@@ -25,15 +25,17 @@ Shader "Rouge/Character"
             ZTest LEqual
 
             HLSLPROGRAM
-            #pragma target 2.0
+            #pragma target 4.0
             #pragma vertex vert
             #pragma fragment frag
+            #pragma multi_compile_instancing
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
             struct Attributes
             {
                 float4 positionOS : POSITION;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
             struct Varyings
@@ -44,6 +46,7 @@ Shader "Rouge/Character"
             Varyings vert(Attributes input)
             {
                 Varyings o;
+                UNITY_SETUP_INSTANCE_ID(input);
                 o.positionCS = TransformObjectToHClip(input.positionOS.xyz);
                 return o;
             }
@@ -62,10 +65,12 @@ Shader "Rouge/Character"
             Tags { "LightMode"="UniversalForward" }
 
             HLSLPROGRAM
+            #pragma target 4.0
             #pragma vertex Vert
             #pragma fragment Frag
-            #pragma target 2.0
+            #pragma multi_compile_instancing
             #pragma multi_compile_fog
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -77,6 +82,7 @@ Shader "Rouge/Character"
                 float4 positionOS : POSITION;
                 float3 normalOS   : NORMAL;
                 float2 texcoord   : TEXCOORD0;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
             struct Varyings
@@ -103,6 +109,8 @@ Shader "Rouge/Character"
             Varyings Vert(Attributes input)
             {
                 Varyings o;
+                UNITY_SETUP_INSTANCE_ID(input);
+
                 VertexPositionInputs posInput = GetVertexPositionInputs(input.positionOS.xyz);
                 VertexNormalInputs nrmInput  = GetVertexNormalInputs(input.normalOS);
 
@@ -126,21 +134,15 @@ Shader "Rouge/Character"
                 Light light = GetMainLight();
                 half NdotL = saturate(dot(normalWS, light.direction));
 
-                // Surface data for PBR
                 BRDFData brdfData;
                 InitializeBRDFData(albedo, _Metallic, half3(0, 0, 0), _Smoothness, alpha, brdfData);
 
-                // Direct BRDF
                 half3 direct = DirectBDRF(brdfData, normalWS, light.direction, viewDirWS) * NdotL * light.color;
 
                 // ── Indirect (IBL + SH) ──
-                half3 indirect = half3(0, 0, 0);
                 half3 ambient  = SampleSH(normalWS);
+                half3 indirect = ambient * brdfData.diffuse;
 
-                // Diffuse IBL: SH ambient * albedo
-                indirect += ambient * brdfData.diffuse;
-
-                // Specular IBL: rough environment reflection (approximate with SH)
                 half3 reflectDir = reflect(-viewDirWS, normalWS);
                 half3 envSpecular = SampleSH( reflectDir ) * brdfData.specular * brdfData.roughness * 0.5;
                 indirect += envSpecular;

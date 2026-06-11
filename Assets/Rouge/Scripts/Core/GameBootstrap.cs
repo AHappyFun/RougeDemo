@@ -86,7 +86,8 @@ namespace Rouge
             var go = MeshGenerator.CreatePlayer(Color.white, 1.2f);
             go.transform.position = new Vector3(0, 0.5f, 0);
 
-            var stats = go.AddComponent<PlayerStats>();
+            var stats = go.GetComponent<PlayerStats>();
+            if (stats == null) stats = go.AddComponent<PlayerStats>();
             stats.maxHP = gameConfig != null ? gameConfig.playerMaxHP : 100;
             stats.currentHP = stats.maxHP;
 
@@ -196,10 +197,10 @@ namespace Rouge
                 "Enemies: 0  Kills: 0", font, 18, TextAnchor.UpperRight,
                 new Vector2(1, 1), new Vector2(1, 1), new Vector2(-15, -10));
 
-            // Player HP (top-center)
+            // Player HP (top-left)
             gm.playerHPText = MakeText("PlayerHPText", canvasGO.transform,
-                "HP: 100%", font, 20, TextAnchor.UpperCenter,
-                new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -8));
+                "HP: 100%", font, 22, TextAnchor.UpperLeft,
+                new Vector2(0, 1), new Vector2(0, 1), new Vector2(15, -10));
 
             // Cooldown bar (below HP text)
             var barBG = MakeImage("CooldownBarBG", canvasGO.transform, new Color(0.2f, 0.2f, 0.2f));
